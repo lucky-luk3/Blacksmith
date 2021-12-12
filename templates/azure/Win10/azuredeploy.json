@@ -178,6 +178,13 @@
             },
             "defaultValue": false
         },
+        "enableNSGLogs": {
+            "type": "bool",
+            "metadata": {
+                "description": "Do you want register Traffic Flow logs?"
+            },
+            "defaultValue": false
+        },
         "enableAntimalware": {
             "type": "bool",
             "metadata": {
@@ -308,7 +315,7 @@
             "sku": {
                 "name": "Standard_LRS"
             },
-            "kind": "Storage",
+            "kind": "StorageV2",
             "properties": {}
         },
         {
@@ -611,6 +618,39 @@
                     "location": {
                         "value": "[parameters('location')]"
                     }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkWatchers",
+            "apiVersion": "2021-02-01",
+            "name": "MynetworkWatcher",
+            "location": "[parameters('location')]",
+            "properties": {}
+        },
+        {
+            "condition": "[parameters('enableNSGLogs')]",
+            //"name": "[concat(variables('allWinWKS')[copyIndex('vmNSGLogCopy')].vmName, '-registerNGSLogs')]",
+            "name": "MynetworkWatcher/Microsoft.NetworkNSGLog",
+            "type": "Microsoft.Network/networkWatchers/FlowLogs/",
+            "location": "[parameters('location')]",
+            "apiVersion": "2019-11-01",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkWatchers', 'MynetworkWatcher')]",
+                "[resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
+                "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsg-default-name'))]"
+            ],
+            "properties": {
+                "targetResourceId": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsg-default-name'))]",
+                "storageId": "[resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
+                "enabled": true,
+                "retentionPolicy": {
+                    "days": 5,
+                    "enabled": true
+                },
+                "format": {
+                    "type": "JSON",
+                    "version": 2
                 }
             }
         },
